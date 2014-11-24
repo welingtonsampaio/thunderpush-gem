@@ -40,6 +40,11 @@ module ThunderPush
       Signature::Token.new(@publickey, @privatekey)
     end
 
+    def config(&block)
+      raise ConfigurationError, 'You need a block' unless block_given?
+      yield self
+    end
+
     def encrypted=(bool)
       @scheme = bool ? 'https' : 'http'
       # Configure port if it hasn't already been configured
@@ -100,8 +105,11 @@ module ThunderPush
     # @raise [Thunderpushcli::Error] Unsuccessful response - see the error message
     # @raise [Thunderpushcli::HTTPError] Error raised inside http client. The original error is wrapped in error.original_error
     #
-    def trigger(channel, event, data)
-      post("/channels/#{channel}/", trigger_params(event, data))
+    def trigger(channels, event, data)
+      channels = Array(channels) unless channels.is_a? Array
+      channels.each do |channel|
+        post("/channels/#{channel}/", trigger_params(channel, event, data))
+      end
     end
 
     # Trigger an event on one or more channels
@@ -118,8 +126,11 @@ module ThunderPush
     # @raise [Thunderpushcli::Error] Unsuccessful response - see the error message
     # @raise [Thunderpushcli::HTTPError] Error raised inside http client. The original error is wrapped in error.original_error
     #
-    def trigger_async(channel, event, data)
-      post_async("/channels/#{channel}/", trigger_params(event, data))
+    def trigger_async(channels, event, data)
+      channels = Array(channels) unless channels.is_a? Array
+      channels.each do |channel|
+        post_async("/channels/#{channel}/", trigger_params(channel, event, data))
+      end
     end
 
     # Configure Thunderpush connection by providing a url rather than specifying
@@ -152,8 +163,9 @@ module ThunderPush
 
     protected
 
-    def trigger_params(event_name, data)
+    def trigger_params(channel, event_name, data)
       data = {
+          channel: channel,
           event: event_name,
           data: data
       }
