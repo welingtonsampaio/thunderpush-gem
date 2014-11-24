@@ -131,12 +131,12 @@ module ThunderPush
     def url=(str)
       regex = /^(?<scheme>http|https):\/\/((?<publickey>[\w-]+)(:(?<privatekey>[\w-]+){1})?@)?(?<hostname>[\w\.-]+)(:(?<port>[\d]+))?/
       match = str.match regex
+      @scheme     = match[:scheme]     unless match[:scheme].nil?
+      self.encrypted= true if scheme == 'https'
       @port       = match[:port].to_i  unless match[:port].nil?
       @hostname   = match[:hostname]   unless match[:hostname].nil?
       @publickey  = match[:publickey]  unless match[:publickey].nil?
       @privatekey = match[:privatekey] unless match[:privatekey].nil?
-      @scheme     = match[:scheme]     unless match[:scheme].nil?
-      self.encrypted= true if scheme == 'https'
     end
 
     # @private Builds a url for this app, optionally appending a path
