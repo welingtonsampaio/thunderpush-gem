@@ -22,6 +22,15 @@ describe ThunderPush::Client do
     expect(@client1.sync_http_client).to be_kind_of HTTPClient
   end
 
+  it 'should be able configure from config and block' do
+    expect { @client1.config }.to raise_error ThunderPush::ConfigurationError
+    old_port = @client1.port
+    @client1.config do |config|
+      config.port = 111
+    end
+    expect(@client1.port).not_to eq old_port
+  end
+
   describe 'different instances' do
     it 'should send scheme messages to different objects' do
       expect(@client1.scheme).not_to eq @client2.scheme
@@ -110,10 +119,9 @@ describe ThunderPush::Client do
               :headers => { 'X-Thunder-Secret-Key' => 'apisecret' }
           }).
       to_return({
-        :status => 200,
-        :body => MultiJson.encode({})
+        :status => 202
       })
-      @client1.trigger 'channel-name', 'event-name', {data: 'content'}
+      @client1.trigger ['channel-name'], 'event-name', {data: 'content'}
     end
 
   end
