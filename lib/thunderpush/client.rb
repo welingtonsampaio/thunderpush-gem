@@ -66,6 +66,14 @@ module ThunderPush
       Resource.new(self, "/#{publickey}#{path}").post_async body
     end
 
+    def private_subscribe_async(userid, channel)
+      Resource.new(self, "/#{publickey}/private/channels/#{channel}/").post_async userid
+    end
+
+    def private_subscribe_sync(userid, channel)
+      Resource.new(self, "/#{publickey}/private/channels/#{channel}/").post userid
+    end
+
     # @private Construct a net/http http client
     def sync_http_client
       @client ||= begin
@@ -88,7 +96,7 @@ module ThunderPush
 
     # Trigger an event on one or more channels
     #
-    # POST /api/[api_version]/channels/[channel]/
+    # POST /api/[api_version]/events/[event_name]/
     #
     # @param channels [String or Array] 1-10 channel names
     # @param event_name [String]
@@ -97,36 +105,34 @@ module ThunderPush
     #
     # @return [Hash] See Thunderpush API docs
     #
-    # @raise [Thunderpushcli::Error] Unsuccessful response - see the error message
-    # @raise [Thunderpushcli::HTTPError] Error raised inside http client. The original error is wrapped in error.original_error
+    # @raise [ThunderPush::Error] Unsuccessful response - see the error message
+    # @raise [ThunderPush::HTTPError] Error raised inside http client. The original error is wrapped in error.original_error
     #
-    def trigger(channel, event, data)
-      post("/channels/#{channel}/", trigger_params(event, data))
+    def trigger(channels, event_name, data)
+      post("/events/#{event_name}/", trigger_params(channels, data))
     end
 
     # Trigger an event on one or more channels
     #
-    # POST /apps/[app_id]/events
+    # POST /apps/[app_id]/events/[event_name]/
     #
     # @param channels [String or Array] 1-10 channel names
     # @param event_name [String]
     # @param data [Object] Event data to be triggered in javascript.
     #   Objects other than strings will be converted to JSON
     #
-    # @return [Hash] See Thunderpush API docs
+    # @raise [ThunderPush::Error] Unsuccessful response - see the error message
+    # @raise [ThunderPush::HTTPError] Error raised inside http client. The original error is wrapped in error.original_error
     #
-    # @raise [Thunderpushcli::Error] Unsuccessful response - see the error message
-    # @raise [Thunderpushcli::HTTPError] Error raised inside http client. The original error is wrapped in error.original_error
-    #
-    def trigger_async(channel, event, data)
-      post_async("/channels/#{channel}/", trigger_params(event, data))
+    def trigger_async(channels, event_name, data)
+      post_async("/events/#{event_name}/", trigger_params(channels, data))
     end
 
     # Configure Thunderpush connection by providing a url rather than specifying
     # scheme, key, secret, and app_id separately.
     #
     # @example
-    #   Thunderpush.default_client.url = http://key:secret@127.0.0.1:5678
+    #   ThunderPush.default_client.url = http://key:secret@127.0.0.1:5678
     #
     def url=(str)
       regex = /^(?<scheme>http|https):\/\/((?<publickey>[\w-]+)(:(?<privatekey>[\w-]+){1})?@)?(?<hostname>[\w\.-]+)(:(?<port>[\d]+))?/
@@ -152,11 +158,8 @@ module ThunderPush
 
     protected
 
-    def trigger_params(event_name, data)
-      data = {
-          event: event_name,
-          data: data
-      }
+    def trigger_params(channels, data)
+      data.merge! :channels => channels
       begin
         MultiJson.encode(data)
       rescue MultiJson::DecodeError => e

@@ -104,7 +104,7 @@ describe ThunderPush::Client do
 
     it 'should be able trigger a event to ThunderPush server' do
       @client1.authenticate 'apikey', 'apisecret'
-      api_path = %r{/apikey/channels/channel-name/}
+      api_path = %r{/apikey/events/event-name/}
       stub_request(:post, api_path).
       with({
               :headers => { 'X-Thunder-Secret-Key' => 'apisecret' }
@@ -114,6 +114,26 @@ describe ThunderPush::Client do
         :body => MultiJson.encode({})
       })
       @client1.trigger 'channel-name', 'event-name', {data: 'content'}
+    end
+
+  end
+
+  describe 'Private commands' do
+
+    it 'should de able add a new user in private channel' do
+      @client1.authenticate 'apikey', 'apisecret'
+      api_path = %r{/apikey/private/channels/private-channel/}
+      stub_request(:post, api_path).
+        with({
+               :headers => { 'X-Thunder-Secret-Key' => 'apisecret' },
+               :body => 'userid'
+             }).
+        to_return({
+                    :status => 200,
+                    :body => MultiJson.encode({users: 1})
+                  })
+      @client1.private_subscribe_sync 'userid', 'private-channel'
+      @client1.private_subscribe_async 'userid', 'private-channel'
     end
 
   end
