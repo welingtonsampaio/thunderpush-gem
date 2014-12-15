@@ -127,21 +127,18 @@ describe ThunderPush::Client do
   end
 
   describe 'Private commands' do
+    expect_hash = {auth:'70bb4f429346ba2287bca93b4c9cd9cc1d29c00c76d0ecf6b5bc44c7cc0f67f7'}
 
-    it 'should de able add a new user in private channel' do
+    it 'authentication token to private subscribe from string' do
       @client1.authenticate 'apikey', 'apisecret'
-      api_path = %r{/apikey/private/channels/private-channel/}
-      stub_request(:post, api_path).
-        with({
-               :headers => { 'X-Thunder-Secret-Key' => 'apisecret' },
-               :body => 'userid'
-             }).
-        to_return({
-                    :status => 200,
-                    :body => MultiJson.encode({users: 1})
-                  })
-      @client1.private_subscribe_sync 'userid', 'private-channel'
-      @client1.private_subscribe_async 'userid', 'private-channel'
+      body = MultiJson.encode({data:{}, channel: 'private-channel'})
+      expect(@client1.authentication_string body).to eq expect_hash
+    end
+
+    it 'authentication token to private subscribe from hash' do
+      @client1.authenticate 'apikey', 'apisecret'
+      body = {data:{}, channel: 'private-channel'}
+      expect(@client1.authentication_string body).to eq expect_hash
     end
 
   end

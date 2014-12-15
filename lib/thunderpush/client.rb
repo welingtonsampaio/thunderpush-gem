@@ -35,6 +35,26 @@ module ThunderPush
       @publickey, @privatekey = publickey, privatekey
     end
 
+    # Generate the expected response for an authentication endpoint.
+    #
+    # @example Private channels
+    #   render :json => ThunderPush.default_client.authenticate(params[:thunderpush])
+    #
+    # @param custom_string [String | Hash]
+    #
+    # @return [Hash]
+    def authentication_string(custom_string=nil)
+      custom_string = MultiJson.encode(custom_string) if custom_string.kind_of?(Hash)
+      unless custom_string.nil? || custom_string.kind_of?(String)
+        raise Error, 'Custom argument must be a string'
+      end
+
+      string_to_sign = [@publickey, custom_string].compact.map(&:to_s).join(':')
+      digest = OpenSSL::Digest::SHA256.new
+      signature = OpenSSL::HMAC.hexdigest(digest, @privatekey, string_to_sign)
+      {auth:signature}
+    end
+
     # @private Returns the authentication token for the client
     def authentication_token
       Signature::Token.new(@publickey, @privatekey)
@@ -69,14 +89,6 @@ module ThunderPush
 
     def post_async(path, body)
       Resource.new(self, "/#{publickey}#{path}").post_async body
-    end
-
-    def private_subscribe_async(userid, channel)
-      Resource.new(self, "/#{publickey}/private/channels/#{channel}/").post_async userid
-    end
-
-    def private_subscribe_sync(userid, channel)
-      Resource.new(self, "/#{publickey}/private/channels/#{channel}/").post userid
     end
 
     # @private Construct a net/http http client
