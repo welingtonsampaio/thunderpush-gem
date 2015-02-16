@@ -20,7 +20,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'multi_json', '~> 1.0'
   spec.add_dependency 'signature', '~> 0.1.6'
-  spec.add_dependency 'httpclient', '~> 2.4'
+  spec.add_dependency 'httpclient', '~> 2.6'
   spec.add_dependency 'activesupport', '>= 4'
 
   spec.add_development_dependency 'bundler', '~> 1.6'
